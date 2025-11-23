@@ -1,0 +1,26 @@
+#######################################################
+# Projeto: Trabalho Econometria Questão 1
+# Objetivo: Gerar a tabela com os valores da regressão 4 utilizando o stargazer 
+# Responsáveis: Mario (123674609), Guilherme (123671562) e Matheus (123443189)
+# Data do projeto: Novembro de 2025
+
+# input: regress_4
+# output: regress_4_tabela
+#######################################################
+
+# Limpando Environment e configurações iniciais
+rm(list = ls())
+options(scipen = 10000)
+
+# Carregando pacotes
+library(stargazer)
+
+# Carrega a regressão feita sobre as variáveis
+load("C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 1/tmp/regress_4.RData")
+
+# Gera a tabela com o resultado da regress_4
+stargazer(regress_4, type = "html", out = "C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 1/output/regress_4_tabela.html",          
+  title = "Resultados da Regressão: Log do Salário",
+  align = TRUE, dep.var.labels = "log_wage_homo", covariate.labels = 
+    c("Educação (anos)", "Experiência", "Experiência²", "Homem", "Branco", "Região Norte", "Região Nordeste", "Região Sul", "Região Centro-Oeste"
+  ))

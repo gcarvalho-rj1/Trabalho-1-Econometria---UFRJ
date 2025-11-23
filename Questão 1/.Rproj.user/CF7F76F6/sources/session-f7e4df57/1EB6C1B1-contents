@@ -1,0 +1,1 @@
+data %>% group_by(male, white) %>% summarise(mean(wage_homo))

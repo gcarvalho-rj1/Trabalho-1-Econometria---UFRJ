@@ -1,0 +1,21 @@
+
+#input
+load(file.path(dir_input, "base_inicial.RData"))
+
+
+
+# output
+out = file.path(dir_output, "descritivas.html")
+save(data_exemplo, file = file.path(dir_output, "data_exemplo.RData"))
+
+ggsave(filename = file.path(dir_output, "grafico.png")
+  
+
+
+# tmp
+load(file.path(dir_tmp, "reg1.RData"))
+save(reg1, file = file.path(dir_tmp, "reg1.RData"))
+
+load(file.path(dir_tmp, "regress_4.RData"))
+
+save(regress_4_hetero, file = file.path(dir_tmp, "regress_4_hetero.RData"))

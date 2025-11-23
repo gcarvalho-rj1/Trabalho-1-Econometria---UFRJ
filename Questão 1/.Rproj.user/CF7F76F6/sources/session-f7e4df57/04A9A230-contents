@@ -1,0 +1,28 @@
+#######################################################
+# Projeto: Trabalho Econometria Questão 1
+# Objetivo: Rodar uma regressão de log(salário) em anos de estudo, experiência, o quadrado da experiência, dummies regionais,
+# dummy de sexo, dummy de raça
+# Responsáveis: Mario (123674609), Guilherme (123671562) e Matheus (123443189)
+# Data do projeto: Novembro de 2025
+
+# input: data
+# output: regress_4
+#######################################################
+
+# Carregando pacotes
+library(dplyr)
+
+# Carrega a base de dados
+load(file.path(dir_input, "base_inicial.RData"))
+
+# Cria a variável experience^2
+data <- data %>% mutate(experience2 = experience^2)
+
+# Região referência vai ser sudeste
+# Gênero referência vai ser mulher
+# Raça referência vai ser não branca
+regress_4 <- lm(log_wage_homo ~ education + experience + experience2 + north + northeast + south + centerwest +
+                male + white, data = data
+)
+
+save(regress_4, file = file.path(dir_output, "regress_4.RData"))

@@ -1,0 +1,50 @@
+#######################################################
+# Projeto: Trabalho Econometria Questão 1
+# Objetivo: Calcular os valores preditos e plotar um gráfico 3d relacionando o log(salário) heteroscedástico
+# a experiência e os anos de estudo.
+# Responsáveis: Mario (123674609), Guilherme (123671562) e Matheus (123443189)
+# Data do projeto: Novembro de 2025
+
+# input: regress_4, data
+# output: grafico3d_educ_exp_log(salario)_hetero
+#######################################################
+
+# Limpando Environment e configurações iniciais
+rm(list = ls())
+options(scipen = 10000)
+
+# Carregando pacotes
+library(stargazer)
+library(plotly)
+library(dplyr)
+
+# Carrega a regressão feita sobre as variáveis
+load("C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 1/tmp/regress_4_hetero.RData")
+
+# Carrega a base de dados
+load("C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 1/input/base_inicial.RData")
+
+# Criando os valores preditos
+data$log_pred <- predict(regress_4_hetero)
+
+grafico3d <- plot_ly(data = data,
+                     x = ~education,
+                     y = ~experience,
+                     z = ~log_pred,
+                     type = "scatter3d",
+                     mode = "markers",
+                     marker = list(size = 3, color = ~log_pred, colorscale = "Viridis")
+) %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "Educação (anos)"),
+      yaxis = list(title = "Experiência"),
+      zaxis = list(title = "Log do Salário (predito)")
+    ),
+    title = "Salário Predito em Função da Educação e Experiência"
+  )
+
+# Salva o gráfico
+htmlwidgets::saveWidget(
+  grafico3d, "C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 1/output/grafico3d_educ_exp_log(salario)_hetero.html")
+
