@@ -1,0 +1,38 @@
+#######################################################
+# Projeto: Trabalho Econometria Questão 1
+# Objetivo: Gera as regressões com uma amostra de 200.000 observações
+# Responsáveis: Mario (123674609), Guilherme (123671562) e Matheus (123443189)
+# Data do projeto: Novembro de 2025
+
+# input: data_200
+# output: OLS_x_FGLS_log_wage_hetero_200mil
+#######################################################
+
+# Carrega a base de dados
+load(file.path(dir_tmp, "base_inicial_200.RData"))
+
+# Repetindo as mesmas regressões
+data_200 <- data_200 %>% mutate(experience2 = experience^2)
+
+# Região referência vai ser sudeste
+# Gênero referência vai ser mulher
+# Raça referência vai ser não branca
+regress_4_hetero <- lm(log_wage_hetero ~ education + experience + experience2 + north + northeast + south + centerwest +
+                         male + white, data = data_200
+)
+
+# Regressão para FGLS
+
+sigma2_chapeu <- residuals(regress_4_hetero)^2
+
+regress_fgls <- lm(log_wage_hetero ~ education + experience + experience^2 +
+    male + white + north + northeast + south + centerwest,
+  data = data_200,
+  weights = 1/sigma2_chapeu
+)
+
+
+# Cria a tabela pelo stargazer
+stargazer(regress_4_hetero, regress_fgls, type = "html",
+          out = file.path(dir_output, "OLS_x_FGLS_log_wage_hetero_200mil.html"),
+          title = "OLS x FGLS (Amostra de 200 mil)")
