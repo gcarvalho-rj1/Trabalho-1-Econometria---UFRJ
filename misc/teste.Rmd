@@ -1,0 +1,140 @@
+---
+
+title: "title"
+
+author: "Mario Cesar (123674609), Guilherme (123671562) e Matheus (123443189)"
+
+date: "18/11/2025"
+
+output:
+
+  html_document:
+
+    highlight: textmate
+
+    theme: flatly
+
+    number_sections: yes
+
+    includes:
+
+      in_header: ufrj.html
+
+    toc: yes
+
+    toc_float:
+
+      collapsed: yes
+
+      smooth_scroll: no
+
+  pdf_document:
+
+    toc: yes
+
+---
+<img src="ufrj.png" style="float: right; width: 100px;" alt="Logo">
+ 
+```{r pacotes, include = FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(dplyr)
+library(ggplot2)
+library(stargazer)
+library(lmtest)
+library(sandwich)
+library(car)
+library(plotly)
+```
+
+```{r master, include = FALSE}
+
+source("C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 1/code/_master.R")
+
+```
+# Trabalho de Econometria - Questão 1  
+## Introdução
+Neste relatório apresentaremos a resolução da **Questão 1** e **Questão 2** do **Trabalho de Econometria**. Utilizamos os dados gerados a partir do script disponibilizado pelo professor, sendo baseados em uma simulação da equação de Mincer com erros homoscedásticos e heterocedásticos.  
+
+## Estrutura da base de dados 
+A base de dados mostra uma simulação de um mercado de trabalho pela equação de Mincer. A equação de Mincer relaciona o salário com a escolaridade e experiência profissional. Os dados foram gerados incluindo heterogeneidade na escolaridade e com variáveis relevantes como sexo, raça e distribuição regional.  
+  
+Além das variáveis explicativas (education, experience, male, white e dummies regionais), existem duas versões do salário: uma sob homoscedasticidade e outra sob heterocedasticidade. Dessa forma, investigaremos relaçoes entre variáveis através de regressões, testes para testar heterocedasticidade, estimaremos pelo método Feasible Generalized Least Squares (FGLS) e iremos comparar os resultados entre métodos.  
+
+```{r data_inicial}
+glimpse(data)
+
+```
+
+### Estatísticas descritivas (Item 1.1) {.tabset}
+#### Principais
+```{r descritivas}
+htmltools::includeHTML(file.path(dir_output, "descritivas.html"))
+
+```
+#### CV
+```{r descritivas_2}
+htmltools::includeHTML(file.path(dir_output, "descritivas_pt_2.html"))
+```
+Além das estatísticas básicas, julgamos produtivo incluir o coeficiente de variação (CV), pois o CV permite avaliar a variabilidade relativa de cada variável, comparando dispersões entre variáveis com escalas diferentes. Isso complementa a análise descritiva e ajuda a interpretar melhor a heterogeneidade presente na base simulada.  
+  
+Observando as estatísticas, a escolaridade média é de 9,6 anos, com variabilidade moderada (CV = 0,330), o que sugere uma distribuição relativamente concentrada em torno da média. A proporção de homens (51,3%) e de indivíduos brancos (45,4%) coincide com os valores definidos no processo de simulação, e seus coeficientes de variação próximos de 1 refletem o comportamento esperado de variáveis binárias.  
+  
+A experiência média é de aproximadamente 15 anos e apresenta maior dispersão relativa (CV = 0,613), o que é consistente com seu intervalo mais amplo. As dummies regionais mostram coeficientes de variação elevados, pois a categoria correspondente possui menor representatividade. 
+  
+Os salários, tanto em nível quanto em log, apresentam padrões coerentes com a estrutura da equação de Mincer. O log-salário homocedástico possui baixa variabilidade (CV = 0,071), enquanto os salários em nível exibem maior dispersão, devido à transformação exponencial. Já o log-salário heterocedástico e seu correspondente em nível têm CVs maiores, refletindo a variância crescente introduzida no modelo heterocedástico.  
+  
+
+## Análise Gráfica do Salário x Educação
+## 3.1 Scatterplot: Salário × Educação (Item 1.2)
+```{r sal-edu}
+# Gráfico
+```
+
+
+## 3.2 Scatterplot: Log Salário × Educação (Item 1.3)
+```{r logsal-edu}
+# Gráfico
+```
+
+
+## 3.3 Scatterplot: Log Salário × Experiência (Item 1.4)
+```{r logsal-exp}
+# Gráfico
+```
+
+
+# 4. Estimação da Equação de Mincer (OLS)
+## 4.1 Regressão Completa (Item 1.5)
+```{r mincer-ols}
+# OLS
+```
+
+
+## 4.2 Tabela com Stargazer (Item 1.6)
+```{r tabela-ols}
+# stargazer(...)
+```
+
+
+# 5. Previsões e Gráfico 3D (Item 1.7)
+```{r plot-3d}
+# plotly
+```
+Código adicional ou tabelas complementares podem ser colocados aqui.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
