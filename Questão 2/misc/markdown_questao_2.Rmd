@@ -1,0 +1,254 @@
+---
+title: "Trabalho Econometria I"
+
+author: "Mario Cesar (123674609), Guilherme (123671562) e Matheus (123443189)"
+
+date: "18/11/2025"
+
+output:
+
+  html_document:
+
+    highlight: textmate
+
+    theme: flatly
+
+    number_sections: yes
+
+    includes:
+
+      in_header: ufrj.html
+
+    toc: yes
+
+    toc_float:
+
+      collapsed: yes
+
+      smooth_scroll: no
+
+  pdf_document:
+
+    toc: yes
+---
+ 
+```{r pacotes, include = FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(dplyr)
+library(ggplot2)
+library(stargazer)
+library(lmtest)
+library(sandwich)
+library(car)
+library(plotly)
+library(readxl)
+library(purrr)
+library(tidyr)
+#library(forecast)
+```
+
+```{r config_incial, include = FALSE}
+# Diretórios do projeto
+dir_principal <- "C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 2"
+
+dir_code  <- file.path(dir_principal, "code")
+dir_output   <- file.path(dir_principal, "output")
+dir_input  <- file.path(dir_principal, "input")
+dir_tmp <- file.path(dir_principal, "tmp")
+
+setwd(dir_principal)
+
+```
+
+```{r dados_necessarios, include = FALSE}
+load(file.path(dir_tmp, "base_inicial.RData"))
+load(file.path(dir_output, "ljung_box.RData"))
+load(file.path(dir_output, "ljung_box_2.RData"))
+load(file.path(dir_output, "ljung_box_3.RData"))
+load(file.path(dir_output, "bp_teste.RData"))
+load(file.path(dir_tmp, "regressao_1.RData"))
+load(file.path(dir_tmp, "regressao_2.RData"))
+load(file.path(dir_tmp, "regressao_3.RData"))
+load(file.path(dir_output, "hac.RData"))
+
+```
+
+# Trabalho de Econometria - Questão 2  
+## Introdução
+  Neste relatório apresentaremos a resolução da **Questão 2** do **Trabalho de Econometria**. Utilizamos os dados gerados a partir do arquivo excel disponibilizado pelo professor.
+
+## Estrutura da base de dados 
+  A base de dados mostra um modelo de série de tempo para calcular o repasse cambial para a inflação. Escolhemos o **setor 2** para analisar, porém no final do relatório hà uma observação adicional onde calculamos para **todos os setores** utilizando o pacote **purr** 
+  
+  Dessa forma, iremos rodar algumas regressões a fim de verificar a significância, interpretar resultados  para verificar quais variáveis têm relevância no modelo. Além disso, realizamos testes para verificar heterocedasticidade e autocorrelação.
+
+```{r data_inicial}
+dplyr::glimpse(dados)
+
+```
+
+## Regressão por câmbio e ibcbr (variação percentual mensal da atividade do Banco Central do Brasil) (Item 2)
+
+### Setor 02
+```
+regress_1 <- lm(setor02 ~ cambio + ibcbr, data = dados)
+```
+
+```{r output_regressao_1, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "regress_1_tabela.html"))
+```
+
+  A partir da regressão, é possível estimar que uma variação de 1% na taxa de câmbio gera um efeito de 0,012 na inflação do setor 2. Além disso, uma variação de 1% na atividade do Banco Central do Brasil causa uma variação de 0,149 na inflação do setor 2. Os sinais dos coeficientes estão corretos, visto que, se a taxa de câmbio subir, isso significa uma desvalorização do Real, o que eleva os preços de produtos importados, além de que, se a atividade do BC aumenta, isso revela uma economia aquecida, o que, por sua vez, puxa os preços para cima. O repasse cambial para os preços é de 0,012.
+
+
+## Teste Ljung–Box para testar a presença de autocorrelação
+  Iremos adotar a hipótese nula (Ho) como **não há autocorrelação**, ou seja, os erros são aleatórios. A hipótese alternativa (H1) como **há presença de correlação serial**.
+
+
+```{r ljung-box}
+# Calcula os residuos
+res1 <- residuals(regress_1)
+
+# Realiza o teste Ljung-box
+ljung_box <- Box.test(res1, lag = 12, type = "Ljung-Box")
+ljung_box
+```
+  
+  
+  Para verificar se o modelo sofre de autocorrelação serial, utilizamos o teste Ljung-Box nos resíduos da regressão com 12 defasagens. O resultado mostrou um p-valor extremamente baixo, muito inferior ao nível de significância padrão de 0.05. Com base nesse resultado, rejeitamos a hipótese nula e concluímos que existe autocorrelação estatisticamente significante nos resíduos.
+  
+  Isso confirma que o modelo simples está mal especificado, pois falhou em capturar toda a dinâmica da série de preços.
+
+## Estimando o modelo usando as dummies sazonais
+```
+regress_2 <- lm(setor02 ~ cambio + ibcbr + fev + mar + abr + mai + jun + jul + ago + set + out + nov,
+              data = dados)
+```
+
+```{r output_dummies, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "regress_2_tabela.html"))
+
+```
+  
+  
+  Há um padrão cíclico na inflação do setor. Em relação ao mês base (janeiro), é possível observar que os coeficientes do primeiro semestre não apresentam significância estatística, oscilando próximos a zero. Por outro lado, o segundo semestre revela uma pressão inflacionária sistematicamente maior, com coeficientes elevados e estatisticamente significantes a partir de agosto, atingindo o pico em outubro (3,3 p.p. acima da base). 
+  
+  A inclusão dessas variáveis corrigiu o problema de viés de variável omitida presente no modelo anterior. Isso fica evidente pela mudança nos parâmetros econômicos: o modelo original superestimava o repasse cambial (cujo coeficiente caiu de 0,012 para 0,009) e subestimava o impacto da atividade econômica (o IBC-Br subiu de 0,149 para 0,197), embora ambos permaneçam não significantes. O ajuste do modelo melhorou drasticamente, com o R^2 saltando de 0,006 para 0,384, demonstrando que a sazonalidade é o principal determinante da variação de preços neste setor.
+  
+  
+
+## Teste Ljung–Box para testar a presença de autocorrelação na nova regressão
+  
+  
+```{r ljung-box_2}
+# Realiza o teste
+res_2 <- residuals(regress_2)
+
+ljung_box_2 <- Box.test(res_2, lag = 12, type = "Ljung-Box")
+ljung_box_2
+```
+  
+  Fizemos novamente o teste Ljung-Box, porém utilizamos os resíduos do modelo 2 (o modelo que incluir as dummies sazonais). O resultado do teste apresentou um p-valor de 0,8621, que é amplamente superior ao nível de significância usual de 0,05 (5%).
+
+  Diante desse resultado, não rejeitamos a hipótese nula de ausência de autocorrelação. Isso confirma que a inclusão das variáveis dummies foi eficaz para capturar os padrões sazonais que antes contaminavam os resíduos. Diferentemente do modelo anterior, os erros agora se comportam de maneira aleatória.
+
+## Estimando o modelo incluindo a variável dependente defasada (t–1) e a variável câmbio defasada (t–1):
+```
+regress_3 <- lm(setor02 ~ cambio + ibcbr + setor02_lag1 + cambio_lag1 + fev + mar + abr + mai + jun + jul +
+                ago + set + out + nov, data = dados)
+```
+
+```{r regress_defasada, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "regress_3_tabela.html"))
+
+```
+
+$$
+Repasse_{LP} = \frac{\beta_{cambio} + \beta_{cambio\t-1}}{1 - \beta{SetorXX\_t-1}} = \frac{0.006 + 0.027}{1 - (-0.070)} = \frac{0.033}{1.07} \approx 0.031
+$$
+  A estimação apresentou coeficientes de 0,006 para o câmbio corrente, 0,027 para o câmbio defasado e -0,070 para a inércia inflacionária, todos estatisticamente não significantes. O impacto total de longo prazo, calculado pela soma dos efeitos do câmbio ajustada pela inércia ((0,006 + 0,027) / (1 + 0,070)), é de aproximadamente 0,031%. Porém, dada a falta de significância dos parâmetros, concluímos que o repasse cambial é estatisticamente nulo, sendo a dinâmica de preços do setor explicada fundamentalmente pela forte sazonalidade do segundo semestre.
+  
+## Testando a presença de autocorrelação via  Ljung-Box
+```
+ljung_box_3 <- Box.test(residuals(regress_3), lag = 12, type = "Ljung-Box")
+```
+
+```{r teste_autocorrelacao, echo = FALSE}
+ljung_box_3
+```
+
+  Realizamos novamente o teste Ljung-Box para verificar a presença de autocorrelação. O resultado apresentou um p-valor de 0,9181, amplamente superior ao nível de significância de 5%. Com isso, não rejeitamos a hipótese nula. Concluimos que os resíduos não possuem autocorrelação e comportam-se como ruído branco, o que indica que a dinâmica temporal foi corretamente modelada.
+  
+
+## Testando heterocedasticidade via Breusch-Pagan 
+```
+bp_teste <- bptest(regress_3)
+bp_teste
+```
+  
+  Realizamos o teste de Breusch-Pagan para investigar a presença de heterocedasticidade (variância não constante dos erros). O teste resultou em um p-valor de 0,1941, também acima de 0,05. Dessa forma, não rejeitamos a hipótese nula de homocedasticidade. A conclusão conjunta dos testes é que o modelo está bem especificado, atendendo às premissas clássicas de erros não autocorrelacionados e com variância constante.
+  
+  
+## Realizar o teste (HAC)
+```
+hac <- coeftest(regress_3, vcov = NeweyWest(regress_3, lag = 12, prewhite = FALSE))
+```
+
+```{r ultimo_item, echo = FALSE}
+hac
+```
+  
+  Quando estimamos por HAC, observamos que não houve alteração na signifcanci das principais variáveis. Tanto o câmbio (corrente e defasado) quanto o ibcbr e a inércia permaneceram não significantes.
+  
+  
+  A estimativa robusta tornou as dummies de julho e novembro estatisticamente significantes, reforçando que a sazonalidade, e não as variáveis econômicas, é o principal determinante dos preços neste setor.
+  
+## Conclusão
+  Nós aliamos o impacto do câmbio sobre a inflação no setor 02, nesse trabalho. Começamos com um modelo simples com câmbio e atividade econômica (icbr). Inicialmente o câmbio apresentou um impacto baixo e não significativo, porém nesse modeo os resíduos estavam autocorrelacionados, logo o modelo não capturava toda a dinâmica da inflação.
+  
+  Quando incluímos as variáveis sazonais, conseguimos explicar melhor os padrões da inflação no ano, sobretudo a partir do segundo semestre, o que causou um aumento do R² (subiu de 0,006 para 0,3840). O modelo com as dummies sazonais também corrigiu a autocorrelação, com o teste lJUNG-BOX.
+
+  No final, quando adicionamos as defasagens da inflação e do câmbio, o impacto de longo prazo do câmbio continuou pequeno e não significativo. Os testes de autocorrelação e heterocedasticidade não mostraram problemas no modeo.
+
+  De forma geral, concluímos que, para o setor 02, a sazonalidade tem mais peso na variação dos preços do que o repasse cambial direto. Também aplicamos a mesma metodologia para outros setores, o que nos permitiu uma comparação mais ampla.
+  
+## Observação
+  Também aplicamos a mesma metodologia para outros setores utilizando o pacote purr. Abaixo segue uma função que utilizamos na análise de todos os setores.
+  
+```
+analisa_setor <- function(nome_setor) {
+  df <- dados %>% transmute(
+    setor = .data[[nome_setor]], cambio, ibcbr, fev, mar, abr, mai, jun, jul, ago, set, out, nov) %>%
+    mutate(
+      setor_lag  = lag(setor, 1), cambio_lag = lag(cambio, 1)) %>%
+    drop_na()
+  
+  mod3 <- lm(setor ~ cambio + cambio_lag + ibcbr + setor_lag +
+      fev + mar + abr + mai + jun + jul + ago + set + out + nov, data = df)
+  
+  mod3_hac <- coeftest(mod3, vcov = NeweyWest(mod3, lag = 12, prewhite = FALSE))
+  
+  repasse_total <- coef(mod3)["cambio"] + coef(mod3)["cambio_lag"]
+  
+  ljung <- Box.test(residuals(mod3), lag = 12, type = "Ljung-Box")
+  bp <- bptest(mod3)
+  
+  list(setor = nome_setor,
+       modelo=mod3,
+       modelo_hac = mod3_hac,
+       repasse_total = as.numeric(repasse_total),
+       ljung_pvalue = ljung$p.value,
+       bp_pvalue = bp$p.value)
+}
+```
+  Para ver o código inteiro, basta olhar na pasta **code** da Questão 2 nos script **10, 11 e 12**
+  
+```{r ultimo_chunk_finalmente, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "resumo_setores.html"))
+
+```
+
+
+ 
