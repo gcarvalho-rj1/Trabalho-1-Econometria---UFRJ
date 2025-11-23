@@ -15,10 +15,9 @@ Descrição do Projeto - Questão 2
 
 Objetivo:
 
-- Estimar os efeitos de variáveis explicativas no salário.
 - Estimar modelos de regressão por OLS e FGLS.
 - Realizar a comparação entre modelos com erro homocedástico e erro heterocedástico.
-- Implementar testes de heterocedasticidade utilizando White e Breusch-Pagan.
+- Implementar testes de heterocedasticidade.
 - Analisar a significância estatística dos coeficientes.
 
 ###############################################################
@@ -42,11 +41,3 @@ O diretório raiz contém as seguintes pastas organizadas:
 
 5. misc
    - Materiais diversos, como notas de leitura ou referências bibliográficas.
-
-###############################################################
-Observações
-###############################################################
-
-- Coeficiente de Variação (CV): Decidimos manter a análise do coeficiente de variação como parte das estatísticas descritivas. O CV será usado para medir a dispersão relativa das variáveis e compará-las, especialmente no contexto de salário, ajudando a entender a heterogeneidade salarial da amostra. Quanto maior o CV, maior a desigualdade relativa no salário da amostra.
-
-- Validação do modelo: Além dos testes de heterocedasticidade (White e Breusch-Pagan), iremos realizar a validação cruzada visando robustez nas estimativas.
