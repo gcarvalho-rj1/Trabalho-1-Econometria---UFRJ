@@ -39,5 +39,10 @@ library(dplyr)
 
 
 
-
+source("code/1_instala_pacotes.R")
+source("code/2_gera_base.R")
+source("code/3_estats_descritivas.R")
+source("code/4_medias_variaveis.R")
+source("code/6_teste_t.R")
+source("code/7_balanceamento_regressao.R")
 
