@@ -1,0 +1,82 @@
+---
+title: "Trabalho Econometria I"
+
+author: "Mario Cesar (123674609), Guilherme (123671562) e Matheus (123443189)"
+
+date: "5/12/2025"
+
+output:
+  html_document:
+    highlight: textmate
+    theme: flatly
+    number_sections: no   
+    includes:
+      in_header: ufrj.html
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+
+  pdf_document:
+    toc: yes
+    number_sections: no   
+
+---
+ 
+```{r pacotes, include = FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(dplyr)
+library(ggplot2)
+library(stargazer)
+library(lmtest)
+library(pacman)
+library(stargazer)
+library(tidyr)
+library(AER)
+```
+
+```{r config_incial, include = FALSE}
+# Diretórios do projeto
+dir_principal <- "C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 3"
+
+dir_code  <- file.path(dir_principal, "code")
+dir_output   <- file.path(dir_principal, "output")
+dir_input  <- file.path(dir_principal, "input")
+dir_tmp <- file.path(dir_principal, "tmp")
+
+```
+
+```{r dados_necessarios, include = FALSE}
+load(file.path(dir_tmp, "base_inicial.RData"))
+
+
+```
+
+# Trabalho de Econometria - Questão 3  
+## Introdução
+  Neste relatório apresentaremos a resolução da **Questão 3** do **Trabalho de Econometria**. Utilizamos os dados gerados a partir do arquivo Stata disponibilizado pelo professor.
+
+### Estrutura da base de dados
+
+  A base de dados contém informações sobre testes padronizados em escolas italianas (INVALSI). Contém variáveis de desempenho, tamanho da turma e um experimento de monitoramento aleatório. O objetivo do trabalho é analisar o impacto do tamanho da turma nas notas, utilizando a Regra de Maimônides como instrumento, e verificar como a fraude (manipulação de notas) afeta essas estimativas.
+  Nesse sentido, vamos rodar algumas regressões e testes estatísticos para verificar a significância e interpretar resultados. Usaremos estatísticas descritivas, testes de balanceamento (t-test) e regressões com Variáveis Instrumentais (IV) para corrigir a endogeneidade e o viés de seleção. Além disso, apresentaremos gráficos de descontinuidade (RDD) para visualizar o impacto da regra.
+
+```{r data_inicial}
+dplyr::glimpse(dados)
+
+```
+
+## Características da amostra e estatísticas descritivas
+
+```{r descritivas, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "Q3_1_descr_italia.html"))
+```
+
+
+## Médias das variáveis selecionadas
+  
+```{r medias_variaveis, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "Q3_2_medias_regiao_serie.html"))
+```

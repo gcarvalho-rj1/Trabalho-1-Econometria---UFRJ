@@ -1,0 +1,212 @@
+---
+title: "Trabalho Econometria I"
+
+author: "Mario Cesar (123674609), Guilherme (123671562) e Matheus (123443189)"
+
+date: "5/12/2025"
+
+output:
+  html_document:
+    highlight: textmate
+    theme: flatly
+    number_sections: no   
+    includes:
+      in_header: ufrj.html
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: no
+
+  pdf_document:
+    toc: yes
+    number_sections: no   
+
+---
+ 
+```{r pacotes, include = FALSE}
+
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+library(dplyr)
+library(ggplot2)
+library(stargazer)
+library(lmtest)
+library(pacman)
+library(stargazer)
+library(tidyr)
+library(AER)
+```
+
+```{r config_incial, include = FALSE}
+# Diretórios do projeto
+dir_principal <- "C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 3"
+
+dir_code  <- file.path(dir_principal, "code")
+dir_output   <- file.path(dir_principal, "output")
+dir_input  <- file.path(dir_principal, "input")
+dir_tmp <- file.path(dir_principal, "tmp")
+
+```
+
+```{r dados_necessarios, include = FALSE}
+load(file.path(dir_tmp, "base_inicial.RData"))
+
+
+```
+
+# Trabalho de Econometria - Questão 3  
+## Introdução
+  Neste relatório apresentaremos a resolução da **Questão 3** do **Trabalho de Econometria**. Utilizamos os dados gerados a partir do arquivo Stata disponibilizado pelo professor.
+
+### Estrutura da base de dados
+
+  A base de dados contém informações sobre testes padronizados em escolas italianas (INVALSI). Contém variáveis de desempenho, tamanho da turma e um experimento de monitoramento aleatório. O objetivo do trabalho é analisar o impacto do tamanho da turma nas notas, utilizando a Regra de Maimônides como instrumento, e verificar como a fraude (manipulação de notas) afeta essas estimativas.
+  Nesse sentido, vamos rodar algumas regressões e testes estatísticos para verificar a significância e interpretar resultados. Usaremos estatísticas descritivas, testes de balanceamento (t-test) e regressões com Variáveis Instrumentais (IV) para corrigir a endogeneidade e o viés de seleção. Além disso, apresentaremos gráficos de descontinuidade (RDD) para visualizar o impacto da regra.
+
+```{r data_inicial}
+dplyr::glimpse(dados)
+
+```
+
+## Características da amostra e estatísticas descritivas
+
+```{r descritivas, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "Q3_1_descr_italia.html"))
+```
+
+
+## Médias das variáveis selecionadas
+  
+```{r medias_variaveis, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "Q3_2_medias_regiao_serie.html"))
+```
+
+## Calculando o impacto do monitoramento (inclusive por regiões)
+
+É importante checar o balanceamento porque o monitoramento foi definido por sorteio. Se a aleatorização estiver funcionando, as turmas com fiscal e sem fiscal têm que ser parecidas em características que afetam notas e fraude. Nesse sentido, as diferenças observadas podem ser atribuídas ao tratamento. Se, por exemplo, a variável “dad_lowedu” estiver maior nas turmas monitoradas, essas turmas concentram alunos de origem socioeconômica menos favorecida, o que tende a reduzir o desempenho independentemente do monitoramento. Nesse caso, o efeito estimado do fiscal ficaria contaminado por esse desbalanceamento e deixaria de ter interpretação causal limpa.
+
+
+```{r balanceamento, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "Q3_5_balanceamento_mom_unemp_regioes.html"))
+htmltools::includeHTML(file.path(dir_output, "Q3_5_balanceamento_total.html"))
+htmltools::includeHTML(file.path(dir_output, "Q3_6_impacto_monitoramento.html"))
+
+```
+  
+ 
+
+## Testando se as notas da região Sul muda mais com a manipulação do que na região Norte
+```
+dados <- dados |>
+  dplyr::mutate(
+    sul = ifelse(area == "Sul" | south == 1, 1, 0))
+
+reg_notas_interacao <- lm(
+  answers_math_std ~ our_CHEAT_math * sul,
+  data = dados)
+```
+```{r teste_nota, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "Q3_7_fraude_regioes.html"))
+htmltools::includeHTML(file.path(dir_output, "Q3_7_notas_interacao_sul.html"))
+
+```
+
+  O intercepto em torno de -0,10 é a nota média padronizada nas turmas fora do Sul, sem indício de fraude. Quando aparece fraude em matemática, a nota cresce em cerca de 1,44 desvio-padrão nessas turmas, o que mostra o tamanho da ajuda que a manipulação dá na prova.
+
+  A dummy sul é positiva (≈ 0,046) e altamente significativa, sugerindo que, mesmo controlando para fraude, as turmas do Sul têm notas um pouco maiores que as do restante do país. Mas essa diferença é pequena em termos de magnitude, e fica grande em significância basicamente porque a amostra é enorme.
+
+  O termo de interação our_CHEAT_math:sul é negativo e pequeno (-0,013) e, inclusive, não significativo (p ≈ 0,38). Em termos práticos, isso indica que o “bônus” de nota gerado pela manipulação é praticamente o mesmo no Sul e no resto da Itália. Ou seja, os alunos do Sul não parecem se beneficiar mais (nem menos) da fraude em matemática do que os alunos das demais regiões.
+  
+  
+  Se você simplesmente regressar a nota dos alunos (answers_math_std, por exemplo) no tamanho da turma (clsize_snv), vai estar implicitamente assumindo que as turmas são formadas de modo aleatório em relação a características dos alunos e das escolas. Na prática isso não é verdade. As escolas podem organizar turmas de tamanhos diferentes para alunos com maior dificuldade, para alunos com deficiência, ou em escolas de áreas remotas onde a demanda é menor. Essas características (habilidade prévia, background socioeconômico, qualidade dos professores, gestão da escola) afetam simultaneamente o tamanho da turma e a nota, gerando viés de variável omitida.
+
+Na forma econométrica, clsize_snv é endógeno: está correlacionado com o erro da equação de desempenho. O coeficiente da regressão simples não tem interpretação causal; ele mistura efeito “verdadeiro” do tamanho da turma com seleção de alunos e escolas em turmas menores ou maiores.
+  
+##  Questão: Por que é importante utilizar uma regra como essa para identificar o efeito? Como podemos explorá-la? Que hipóteses precisamos fazer para recuperar o efeito causal do tamanho da turma?
+
+A estratégia consiste em explorar o fato de que o tamanho das turmas na Itália não é resultado apenas de decisões discricionárias dos diretores, mas é fortemente determinado por uma regra administrativa análoga à Regra de Maimônides. Por essa regra, quando a matrícula em uma determinada série ultrapassa certos pontos de corte, a escola é obrigada a abrir uma nova turma. Assim, uma coorte com 25 alunos pode permanecer em uma única turma relativamente cheia, enquanto uma coorte com 26 alunos deve ser dividida em duas turmas menores. Essa descontinuidade gera variação mecânica no tamanho das classes que não decorre, em princípio, das características individuais dos alunos ou de escolhas pedagógicas específicas.
+
+A importância dessa regra reside no fato de que ela cria variação quase aleatória no tamanho das turmas em torno dos cutoffs. Alunos matriculados em séries com 25 e 26 estudantes são, em média, muito semelhantes, mas acabam expostos a tamanhos de classe bastante distintos apenas porque a matrícula cruzou o ponto de corte. Essa configuração pode ser explorada de duas maneiras principais: i) por meio de um desenho de descontinuidade de regressão, comparando turmas imediatamente abaixo e acima dos limites de matrícula; ou ii) utilizando o tamanho “predito” pela regra como variável instrumental para o tamanho observado. Para que a interpretação causal seja válida, é necessário supor que, na vizinhança dos cutoffs, as características observáveis e não observáveis dos alunos e das escolas variam de forma contínua e que diretores e famílias não manipulam estrategicamente a matrícula para se posicionar de um lado específico do limite. Além disso, assume-se que a regra afeta o desempenho apenas por meio do tamanho da turma. Sob essas condições, a descontinuidade gerada pela regra pode ser tratada como um experimento natural sobre o impacto de turmas menores no aprendizado.
+ 
+## Scatterplot nota dos alunos e clsize_hat. Estimação da regressão linear
+```
+dados$grupo_corte <- ifelse(dados$clsize_hat > 25, "> 25 (Turmas Grandes)", "<= 25 (Turmas Pequenas)")
+
+```
+![](C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 3/misc/tamanho_predito.jpg)
+
+![](C:/Users/apdua/Desktop/Mario/Trabalho Econometria/Questão 3/misc/tamanho_observado.jpg)
+
+Na comparação, o uso do tamanho predito da turma, clsize_hat, é mais adequado para aproximar uma relação causal entre tamanho da classe e desempenho. O tamanho observado, clsize_snv, incorpora não só o componente determinado pela regra administrativa, mas também decisões discricionárias de diretores e professores – por exemplo, formar turmas menores para alunos com maior dificuldade, criar classes especiais ou reorganizar séries em função de características locais. Essas decisões tendem a estar correlacionadas com fatores não observados que também afetam as notas, como motivação dos alunos, qualidade da gestão escolar ou envolvimento das famílias. Quando usamos clsize_snv diretamente como regressor ou como running variable, essas características acabam embutidas no termo de erro, gerando correlação entre o tamanho da turma e o erro da equação e, portanto, viés de variável omitida.
+
+Já o clsize_hat é construído mecanicamente a partir da matrícula e da própria regra de Maimônides italiana, isto é, representa o tamanho que a turma deveria ter se a norma fosse aplicada estritamente. Assim, ele captura a parte “exógena” da variação no tamanho de classe, associada apenas aos pontos de corte da legislação, e não às escolhas idiossincráticas de cada escola. Sob a hipótese de que a regra em si é independente dos choques específicos de desempenho e de que as características dos alunos variam de forma contínua em torno dos cutoffs, usar o tamanho predito como variável de interesse reduz significativamente o viés de variável omitida. Em outras palavras, o RDD baseado em clsize_hat se aproxima mais de um experimento natural, no qual diferenças de desempenho entre turmas imediatamente abaixo e acima do ponto de corte podem ser interpretadas como consequência do tamanho da turma, e não de seleção de alunos ou escolas.
+
+## O fato de os professores ou diretores poderem alterar ligeiramente o tamanho das turmas pode invalidar a estratégia de descontinuidade de regressão? Por quê? Que outra técnica poderíamos combinar aqui? Por que?
+
+```{r dag, echo = FALSE}
+
+```
+
+```{r var_instrumental, echo = FALSE}
+controles_iv <- c("female", "immigrants_broad",
+  "dad_lowedu", "dad_midedu", "dad_highedu",
+  "mom_unemp", "mom_housew", "mom_employed",
+  "grade", "area")
+
+formula_iv_1 <- as.formula(
+  paste0(
+    "answers_math_std ~ clsize_snv + ",
+    paste(controles_iv, collapse = " + "),
+    " | clsize_hat + ",
+    paste(controles_iv, collapse = " + ")))
+
+reg_maimonides <- ivreg(formula_iv_1, data = dados)
+
+summary(reg_maimonides)
+
+```
+
+Ao estimarmos o efeito do tamanho da turma sobre o desempenho em matemática usando a regra de Maimônides como instrumento para o tamanho observado da classe. O coeficiente de clsize_snv é negativo e estatisticamente significativo (≈ –0,006), indicando que um aumento de um aluno por turma reduz a nota padronizada de matemática em cerca de 0,006 desvio-padrão. Em termos práticos, uma redução de 5 alunos por turma estaria associada a um ganho em torno de 0,03 desvio-padrão. O efeito é moderado, mas consistente com a interpretação de que turmas menores favorecem o aprendizado, ao menos para os alunos cujas turmas efetivamente respondem à regra.
+
+Os demais coeficientes reforçam a plausibilidade do modelo: estudantes imigrantes têm desempenho significativamente menor, enquanto maior escolaridade dos pais está associada a notas mais altas; desemprego materno aparece correlacionado negativamente com o desempenho, o que é coerente com um contexto de vulnerabilidade socioeconômica. O uso de clsize_hat como variável instrumental busca justamente isolar a parte exógena da variação no tamanho da turma, determinada pelos pontos de corte da legislação, reduzindo o viés de seletividade na formação das classes. Assim, ainda que o R² seja baixo (como é comum em regressões de desempenho educacional), o sinal e a magnitude do coeficiente de clsize_snv podem ser interpretados como uma evidência de que, na margem gerada pela regra de Maimônides, turmas menores têm um impacto causal positivo, embora relativamente pequeno, sobre as notas de matemática.
+
+
+
+## 3.13) Interpretação: Interprete o coeficiente. Como a manipulação dos testes pelos professores influencia o coeficiente? A manipulação deve ser maior ou menor para as classes maiores? Você acredita que o viés joga as estimativas que você acabou de calcular para cima ou para baixo?
+
+O coeficiente estimado para clsize_snv na regressão com variável instrumental é cerca de −0,006. Isso significa que, na margem gerada pela regra de Maimônides, um aumento de um aluno no tamanho da turma está associado a uma queda de aproximadamente 0,006 desvio-padrão na nota padronizada de matemática. Em outras palavras, turmas menores tendem a apresentar desempenho um pouco melhor, ainda que o efeito seja de magnitude relativamente modesta. Essa interpretação, porém, precisa ser lida à luz do fato de que existe manipulação das notas pelos professores e diretores.
+
+A manipulação é justamente uma fonte potencial de viés nesse coeficiente. Se, como sugerem os dados e a literatura, a fraude for mais intensa nas turmas menores (porque é mais fácil “ajudar” os alunos ou coordenar comportamentos oportunistas em classes pequenas), então essas turmas combinam, ao mesmo tempo, tamanho reduzido e notas artificialmente infladas. Omissão dessa variável no modelo faz com que parte do efeito da manipulação seja indevidamente atribuída ao tamanho da turma. Como a fraude aumenta as notas e é mais frequente em classes menores, o coeficiente de clsize_snv tende a ficar mais negativo do que deveria, isto é, o viés empurra a estimativa “para baixo”, superestimando o benefício de reduzir o tamanho da turma.
+
+## Você acredita que os candidatos à variável instrumental são razoáveis? Quais seriam as características ideais que eles deveriam satisfazer? Você crê que essas características estão satisfeitas?
+
+Os dois candidatos a instrumentos – o tamanho predito da turma pela regra de Maimônides (clsize_hat) e o sorteio do monitoramento (o_math) – são, em princípio, razoáveis, mas sua validade depende de hipóteses claras. Do ponto de vista das características ideais de um instrumento, ambos precisam satisfazer: (i) relevância, isto é, forte correlação com as variáveis endógenas que pretendem instrumentar (respectivamente, tamanho da turma e manipulação das provas); e (ii) exogeneidade, isto é, ausência de correlação com o termo de erro da equação de desempenho, o que equivale à condição de exclusão: eles devem afetar as notas apenas por meio das variáveis endógenas, e não por canais diretos adicionais.
+
+No caso de clsize_hat, a relevância é plausível, pois o tamanho predito é construído exatamente a partir da regra administrativa que governa a formação das turmas. A exogeneidade é mais discutível, mas defensável: assume-se que, condicionalmente aos controles, a posição de uma coorte em relação ao ponto de corte da regra não está sistematicamente ligada a choques específicos de desempenho. Já o_math é, por construção, fruto de um sorteio, o que torna crível a hipótese de exogeneidade em relação às características dos alunos e das escolas; a relevância decorre do fato de que a presença do monitor altera substancialmente a probabilidade de fraude. A dúvida principal recai sobre a exclusão: é preciso supor que o monitor influencia as notas apenas ao coibir manipulação, e não, por exemplo, por um efeito direto sobre disciplina ou esforço dos alunos. Em suma, os instrumentos são plausíveis, mas sua validade depende de hipóteses que precisam ser explicitadas e discutidas.
+
+## 3.15) Identificação: Esse modelo está sobre identificado, identificado ou não está identificado? Por quê?
+
+No modelo ampliado, a equação estrutural de interesse inclui duas variáveis endógenas – o tamanho da turma (clsize_snv) e o indicador de manipulação (our_CHEAT_math ou our_CHEAT_ital) – e dois instrumentos excluídos: a regra de Maimônides (clsize_hat) e o sorteio do monitoramento (o_math). Assim, o número de instrumentos é exatamente igual ao número de regressoras endógenas. Nessa configuração, o sistema está identificado, mas não sobre-identificado: há exatamente o número de condições de momento necessárias para pinçar os coeficientes estruturais, sem “sobras” que permitam, por exemplo, realizar um teste de sobre-identificação do tipo Hansen. Portanto, o modelo é exatamente identificado (just-identified), o que significa que, sob a validade dos instrumentos, os coeficientes são identificados, mas não há graus de liberdade adicionais para testar simultaneamente as restrições de exclusão. 
+
+## 3.16 Impacto do tamanho da sala levando em conta o fato de que os professores podem estar manipulando as notas.
+```
+formula_iv_2 <- as.formula(
+  paste0("answers_math_std ~ clsize_snv + our_CHEAT_math + ", paste(controles_iv, collapse = " + "),
+    " | clsize_hat + o_math + ", paste(controles_iv, collapse = " + ")))
+
+reg_maimonides2 <- ivreg(formula_iv_2, data = dados, cluster = "clu")
+
+summary(reg_maimonides2)
+```
+
+```{r maimonides, echo = FALSE}
+htmltools::includeHTML(file.path(dir_output, "Q3_16_iv_maimonides.html"))
+
+```
+
+## 3.17) Interpretação: O que aconteceu com o coeficiente do tamanho da sala?
+  Quando olhamos só para o tamanho da turma, o modelo diz que cada aluno extra reduz um pouco a nota de matemática, em torno de 0,006 desvio-padrão. Parece um efeito pequeno, mas, somado ao longo de vários alunos, sugere um ganho razoável de aprender em turmas menores. O problema é que essa especificação está “jogando na conta” do tamanho da turma tudo o que estiver correlacionado com turmas pequenas, inclusive a manipulação das provas.
+
+  Quando colocamos explicitamente a variável de fraude (our_CHEAT_math) na equação e a instrumentamos com o sorteio do fiscal, duas coisas acontecem o coeficiente do tamanho da turma fica menos negativo (cai em módulo de −0,006 para −0,004) e a fraude aparece com um efeito enorme e positivo na nota. Isso quer dizer que uma parte importante da vantagem das turmas menores não é aprendizado de verdade, é nota inflada. Antes, o modelo confundia esses dois efeitos; depois que controlamos pela fraude, vemos que o impacto “limpo” de reduzir o tamanho da turma é bem menor, e quem explica boa parte das notas altas é justamente a manipulação dos testes.
+
+ 
